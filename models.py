@@ -3,6 +3,18 @@ from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
 
+class User(db.Model, SerializerMixin):
+
+    __tablename__ = 'users'    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+
+    transactions = db.relationship('Transaction', back_populates='user')
+
+    def __repr__(self):
+        return f'<User {self.id}>'
+
 class Transaction(db.Model, SerializerMixin):
 
     __tablename__ = 'transactions'    
@@ -15,17 +27,36 @@ class Transaction(db.Model, SerializerMixin):
 
     user = db.relationship('User', back_populates='transactions')
 
+    transaction_tags = db.relationship('TransactionTag', back_populates='transaction', cascade='all, delete-orphan')
+    
+    
+    # tags = db.relationship('Tag', secondary='transaction_tags', back_populates='transactions')
+
     def __repr__(self):
         return f'<Transaction {self.id}>'
+
+class TransactionTag(db.Model):
     
-class User(db.Model, SerializerMixin):
-
-    __tablename__ = 'users'    
+    __tablename__ = 'transaction_tags'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), nullable=False)
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.id'), nullable=False)
+    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)
 
-    transactions = db.relationship('Transaction', back_populates='user')
+    transaction = db.relationship('Transaction', back_populates='transaction_tags')
+    tag = db.relationship('Tag', back_populates='transaction_tags')
 
     def __repr__(self):
-        return f'<User {self.id}>'
+        return f'<TransactionTag {self.id}>'
+
+class Tag(db.Model):
+    
+    __tablename__ = 'tags'    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+
+    transaction_tags = db.relationship('TransactionTag', back_populates='tag', cascade='all, delete-orphan')
+
+    # transactions = db.relationship('Transaction', secondary='transaction_tags', back_populates='tags')
+    
+    def __repr__(self):
+        return f'<Tag {self.id}>'
