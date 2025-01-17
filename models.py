@@ -5,7 +5,10 @@ db = SQLAlchemy()
 
 class User(db.Model, SerializerMixin):
 
-    __tablename__ = 'users'    
+    __tablename__ = 'users'
+
+    serialize_rules = ('-transactions.user', '-transactions.transaction_tags', '-transactions.transaction_tags.tag')
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
@@ -17,7 +20,10 @@ class User(db.Model, SerializerMixin):
 
 class Transaction(db.Model, SerializerMixin):
 
-    __tablename__ = 'transactions'    
+    __tablename__ = 'transactions'
+
+    serialize_rules = ('-user.transactions', '-transaction_tags.transaction', '-transaction_tags.tag.transactions')
+
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(255), nullable=False)
@@ -35,9 +41,12 @@ class Transaction(db.Model, SerializerMixin):
     def __repr__(self):
         return f'<Transaction {self.id}>'
 
-class TransactionTag(db.Model):
+class TransactionTag(db.Model, SerializerMixin):
     
     __tablename__ = 'transaction_tags'
+
+    serialize_rules = ('-transaction.transaction_tags', '-tag.transaction_tags')
+
     id = db.Column(db.Integer, primary_key=True)
     transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.id'), nullable=False)
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)
@@ -48,9 +57,12 @@ class TransactionTag(db.Model):
     def __repr__(self):
         return f'<TransactionTag {self.id}>'
 
-class Tag(db.Model):
+class Tag(db.Model, SerializerMixin):
     
-    __tablename__ = 'tags'    
+    __tablename__ = 'tags'
+
+    serialize_rules = ('-transaction_tags.tag', '-transaction_tags.transaction.transaction_tags')
+       
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
